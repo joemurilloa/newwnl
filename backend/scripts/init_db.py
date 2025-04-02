@@ -4,13 +4,18 @@ import os
 # Añadir el directorio raíz al path para importar los módulos de la aplicación
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import SessionLocal
+from app.database import SessionLocal, engine
 from app import models
+from app.models import Base
 
 def inicializar_datos():
     """
     Inicializa la base de datos con algunos datos de ejemplo
     """
+    print("Creando tablas de la base de datos...")
+    # Crear todas las tablas definidas en los modelos
+    Base.metadata.create_all(bind=engine)
+    
     db = SessionLocal()
     
     # Verificar si ya hay clientes en la base de datos
@@ -19,6 +24,8 @@ def inicializar_datos():
         print("La base de datos ya contiene datos. Omitiendo inicialización.")
         db.close()
         return
+    
+    print("Inicializando datos de ejemplo...")
     
     # Crear clientes de ejemplo
     cliente1 = models.Cliente(
