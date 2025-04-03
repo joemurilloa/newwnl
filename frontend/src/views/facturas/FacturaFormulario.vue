@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { clientesService, cotizacionesService, facturasService } from '../../services/api';
@@ -109,28 +109,6 @@ const factura = ref({
 });
 const cargando = ref(false);
 
-onMounted(() => {
-  cargarClientes();
-  cargarCotizacionesAprobadas().then(() => {
-    // Verificar si hay un ID de cotización en los parámetros de la URL
-    const cotizacionId = route.query.cotizacion_id;
-    if (cotizacionId) {
-      // Establecer el ID de cotización
-      factura.value.cotizacion_id = parseInt(cotizacionId, 10);
-      
-      // Cargar detalles de la cotización seleccionada
-      cargarDetallesCotizacion();
-    }
-  });
-});
-// Vigilar si se pasa un cotizacion_id en la URL (desde CotizacionDetalle)
-watch(() => route.query.cotizacion_id, (newCotizacionId) => {
-  if (newCotizacionId) {
-    factura.value.cotizacion_id = parseInt(newCotizacionId);
-    cargarDetallesCotizacion();
-  }
-}, { immediate: true });
-
 // Métodos
 const cargarClientes = async () => {
   try {
@@ -144,13 +122,20 @@ const cargarClientes = async () => {
 
 const cargarCotizacionesAprobadas = async () => {
   try {
-    // Obtenemos todas las cotizaciones y filtramos las aprobadas
-    // ya que es posible que el endpoint /cotizaciones/aprobadas no exista
-    const cotizacionesData = await cotizacionesService.getAll();
-    cotizacionesAprobadas.value = cotizacionesData.filter(c => c.estado === 'aprobada');
+    // Utilizamos el endpoint específico para cotizaciones aprobadas
+    const cotizacionesData = await cotizacionesService.getAprobadas();
+    cotizacionesAprobadas.value = cotizacionesData;
   } catch (error) {
-    toast.error('Error al cargar las cotizaciones aprobadas');
-    console.error(error);
+    // Si falla, intentamos con el enfoque alternativo
+    try {
+      console.warn('Fallback: obteniendo todas las cotizaciones y filtrando las aprobadas');
+      const todasCotizaciones = await cotizacionesService.getAll();
+      cotizacionesAprobadas.value = todasCotizaciones.filter(c => c.estado === 'aprobada');
+    } catch (secondError) {
+      toast.error('Error al cargar las cotizaciones aprobadas');
+      console.error(secondError);
+      cotizacionesAprobadas.value = [];
+    }
   }
 };
 
@@ -223,4 +208,20 @@ const crearFactura = async () => {
     cargando.value = false;
   }
 };
+
+// Ciclo de vida
+onMounted(() => {
+  // Cargar datos iniciales
+  Promise.all([cargarClientes(), cargarCotizacionesAprobadas()]).then(() => {
+    // Verificar si hay un ID de cotización en los parámetros de la URL
+    const cotizacionId = route.query.cotizacion_id;
+    if (cotizacionId) {
+      // Establecer el ID de cotización
+      factura.value.cotizacion_id = parseInt(cotizacionId, 10);
+      
+      // Cargar detalles de la cotización seleccionada
+      cargarDetallesCotizacion();
+    }
+  });
+});
 </script>

@@ -190,7 +190,17 @@ const formatearFecha = (fechaStr) => {
 };
 
 const generarPDF = () => {
-  window.open(facturasService.getPdfUrl(factura.value.id), '_blank');
+  if (!factura.value || !factura.value.id) {
+    toast.error('No se puede generar el PDF: factura no válida');
+    return;
+  }
+  // Utilizar la función del servicio para obtener la URL
+  const pdfUrl = facturasService.getPdfUrl(factura.value.id);
+  if (pdfUrl) {
+    window.open(pdfUrl, '_blank');
+  } else {
+    toast.error('Error al generar la URL para el PDF');
+  }
 };
 
 const marcarComoPagada = async () => {
@@ -218,10 +228,8 @@ const marcarComoPagada = async () => {
   }
 };
 
-// Actualizar el método generarPDF
-const generarPDF = () => {
-  // Utilizar la función del servicio para obtener la URL
-  const pdfUrl = facturasService.getPdfUrl(factura.value.id);
-  window.open(pdfUrl, '_blank');
-};
+// Ciclo de vida
+onMounted(() => {
+  cargarFactura();
+});
 </script>

@@ -176,10 +176,19 @@ const cargarCotizaciones = async () => {
   try {
     cargando.value = true;
     const data = await cotizacionesService.getAll();
-    cotizaciones.value = data;
+    
+    // Verificar que data sea un array
+    if (Array.isArray(data)) {
+      cotizaciones.value = data;
+    } else {
+      console.error("Formato inesperado de datos:", data);
+      cotizaciones.value = [];
+      toast.error("Error en el formato de datos recibidos");
+    }
   } catch (error) {
     toast.error('Error al cargar las cotizaciones');
     console.error(error);
+    cotizaciones.value = []; // Establecer un array vacío en caso de error
   } finally {
     cargando.value = false;
   }
@@ -206,15 +215,19 @@ const formatearFecha = (fechaStr) => {
 };
 
 const aplicarFiltros = () => {
-  // Los filtros se aplican automáticamente gracias al computed
+  try {
+    // Los filtros se aplican automáticamente gracias al computed
+    // No necesitamos hacer nada aquí
+  } catch (error) {
+    console.error("Error al aplicar filtros:", error);
+    toast.error("Error al filtrar cotizaciones");
+  }
 };
 
 const limpiarFiltros = () => {
   filtroEstado.value = '';
   filtroCliente.value = '';
 };
-
-// Actualizar los métodos en CotizacionesLista.vue
 
 // Mejorar el método de eliminación con confirmación apropiada
 const eliminarCotizacion = async (id) => {
@@ -238,39 +251,6 @@ const eliminarCotizacion = async (id) => {
   }
 };
 
-// Actualizar el método aplicarFiltros para manejar mejor los errores
-const aplicarFiltros = () => {
-  try {
-    // Los filtros se aplican automáticamente gracias al computed
-    // No necesitamos hacer nada aquí
-  } catch (error) {
-    console.error("Error al aplicar filtros:", error);
-    toast.error("Error al filtrar cotizaciones");
-  }
-};
-
-// Mejorar la carga de cotizaciones
-const cargarCotizaciones = async () => {
-  try {
-    cargando.value = true;
-    const data = await cotizacionesService.getAll();
-    
-    // Verificar que data sea un array
-    if (Array.isArray(data)) {
-      cotizaciones.value = data;
-    } else {
-      console.error("Formato inesperado de datos:", data);
-      cotizaciones.value = [];
-      toast.error("Error en el formato de datos recibidos");
-    }
-  } catch (error) {
-    toast.error('Error al cargar las cotizaciones');
-    console.error(error);
-    cotizaciones.value = []; // Establecer un array vacío en caso de error
-  } finally {
-    cargando.value = false;
-  }
-};
 // Ciclo de vida
 onMounted(() => {
   Promise.all([cargarCotizaciones(), cargarClientes()]);

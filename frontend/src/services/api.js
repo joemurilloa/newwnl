@@ -166,6 +166,10 @@ export const cotizacionesService = {
   
   // Obtener URL para PDF de cotización
   getPdfUrl: (id) => {
+    if (!id) {
+      console.error('ID de cotización no válido para generar PDF');
+      return null;
+    }
     return `${apiClient.defaults.baseURL}/cotizaciones/${id}/pdf`;
   }
 };
@@ -218,6 +222,10 @@ export const facturasService = {
   
   // Obtener URL para PDF de factura
   getPdfUrl: (id) => {
+    if (!id) {
+      console.error('ID de factura no válido para generar PDF');
+      return null;
+    }
     return `${apiClient.defaults.baseURL}/facturas/${id}/pdf`;
   }
 };

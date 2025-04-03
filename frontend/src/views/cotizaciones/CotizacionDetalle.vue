@@ -177,9 +177,8 @@ const cargarCotizacion = async () => {
     cliente.value = clienteData;
     
     // Verificar si ya tiene factura
-    if (cotizacion.value.factura) {
-      tieneFactura.value = true;
-    }
+    tieneFactura.value = !!cotizacion.value.factura;
+    
   } catch (error) {
     toast.error('Error al cargar los datos de la cotización');
     console.error(error);
@@ -221,18 +220,33 @@ const cambiarEstado = async (nuevoEstado) => {
   }
 };
 
-// Actualizar el método generarPDF
 const generarPDF = () => {
+  if (!cotizacion.value || !cotizacion.value.id) {
+    toast.error('No se puede generar el PDF: cotización no válida');
+    return;
+  }
   // Utilizar la función del servicio para obtener la URL
   const pdfUrl = cotizacionesService.getPdfUrl(cotizacion.value.id);
-  window.open(pdfUrl, '_blank');
+  if (pdfUrl) {
+    window.open(pdfUrl, '_blank');
+  } else {
+    toast.error('Error al generar la URL para el PDF');
+  }
 };
 
-// Actualizar el método crearFactura
 const crearFactura = () => {
+  if (!cotizacion.value || !cotizacion.value.id) {
+    toast.error('No se puede crear factura: cotización no válida');
+    return;
+  }
   router.push({
     name: 'factura-nueva',
     query: { cotizacion_id: cotizacion.value.id }
   });
 };
+
+// Ciclo de vida
+onMounted(() => {
+  cargarCotizacion();
+});
 </script>
