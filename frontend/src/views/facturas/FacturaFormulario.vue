@@ -88,13 +88,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { clientesService, cotizacionesService, facturasService } from '../../services/api';
 
 // Router
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 
 // Estado
@@ -107,6 +108,28 @@ const factura = ref({
   rtn: '',
 });
 const cargando = ref(false);
+
+onMounted(() => {
+  cargarClientes();
+  cargarCotizacionesAprobadas().then(() => {
+    // Verificar si hay un ID de cotización en los parámetros de la URL
+    const cotizacionId = route.query.cotizacion_id;
+    if (cotizacionId) {
+      // Establecer el ID de cotización
+      factura.value.cotizacion_id = parseInt(cotizacionId, 10);
+      
+      // Cargar detalles de la cotización seleccionada
+      cargarDetallesCotizacion();
+    }
+  });
+});
+// Vigilar si se pasa un cotizacion_id en la URL (desde CotizacionDetalle)
+watch(() => route.query.cotizacion_id, (newCotizacionId) => {
+  if (newCotizacionId) {
+    factura.value.cotizacion_id = parseInt(newCotizacionId);
+    cargarDetallesCotizacion();
+  }
+}, { immediate: true });
 
 // Métodos
 const cargarClientes = async () => {
@@ -121,8 +144,10 @@ const cargarClientes = async () => {
 
 const cargarCotizacionesAprobadas = async () => {
   try {
-    const cotizacionesData = await cotizacionesService.getAprobadas();
-    cotizacionesAprobadas.value = cotizacionesData;
+    // Obtenemos todas las cotizaciones y filtramos las aprobadas
+    // ya que es posible que el endpoint /cotizaciones/aprobadas no exista
+    const cotizacionesData = await cotizacionesService.getAll();
+    cotizacionesAprobadas.value = cotizacionesData.filter(c => c.estado === 'aprobada');
   } catch (error) {
     toast.error('Error al cargar las cotizaciones aprobadas');
     console.error(error);
@@ -163,21 +188,39 @@ const crearFactura = async () => {
   try {
     cargando.value = true;
     
-    await facturasService.create(factura.value);
+    // Validar que se haya seleccionado una cotización
+    if (!factura.value.cotizacion_id) {
+      toast.error('Debe seleccionar una cotización');
+      return;
+    }
+    
+    // Crear objeto de factura con el formato correcto para el backend
+    const facturaData = {
+      cotizacion_id: factura.value.cotizacion_id,
+      rtn: factura.value.rtn || null // Permitir que sea nulo si no se especifica
+    };
+    
+    const response = await facturasService.create(facturaData);
     toast.success('Factura creada con éxito');
     
-    router.push('/facturas');
+    // Redirigir a la vista detalle de la factura creada
+    router.push(`/facturas/${response.id}`);
   } catch (error) {
-    toast.error('Error al crear la factura');
+    // Mensaje de error más específico según la respuesta del backend
+    if (error.response && error.response.data) {
+      if (error.response.data.detail === "Esta cotización ya tiene una factura asociada") {
+        toast.error('Esta cotización ya tiene una factura asociada');
+      } else if (error.response.data.detail === "La cotización debe estar aprobada para generar una factura") {
+        toast.error('La cotización debe estar aprobada antes de generar una factura');
+      } else {
+        toast.error('Error al crear la factura: ' + error.response.data.detail);
+      }
+    } else {
+      toast.error('Error al crear la factura');
+    }
     console.error(error);
   } finally {
     cargando.value = false;
   }
 };
-
-// Ciclo de vida
-onMounted(() => {
-  cargarClientes();
-  cargarCotizacionesAprobadas();
-});
 </script>

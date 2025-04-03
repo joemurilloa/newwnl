@@ -99,7 +99,7 @@ export const clientesService = {
 
 // Servicios para Cotizaciones
 export const cotizacionesService = {
-  // Implementación similar con mejor manejo de errores...
+  // Obtener todas las cotizaciones
   getAll: async () => {
     try {
       const response = await apiClient.get('/cotizaciones/');
@@ -110,12 +110,69 @@ export const cotizacionesService = {
     }
   },
   
-  // Resto de métodos...
+  // Obtener cotizaciones aprobadas
+  getAprobadas: async () => {
+    try {
+      const response = await apiClient.get('/cotizaciones/aprobadas');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener cotizaciones aprobadas:', error.message);
+      throw error;
+    }
+  },
+  
+  // Obtener una cotización por ID
+  getById: async (id) => {
+    try {
+      const response = await apiClient.get(`/cotizaciones/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al obtener cotización ${id}:`, error.message);
+      throw error;
+    }
+  },
+  
+  // Crear una nueva cotización
+  create: async (cotizacion) => {
+    try {
+      const response = await apiClient.post('/cotizaciones/', cotizacion);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear cotización:', error.message);
+      throw error;
+    }
+  },
+  
+  // Actualizar una cotización
+  update: async (id, cotizacion) => {
+    try {
+      const response = await apiClient.put(`/cotizaciones/${id}`, cotizacion);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al actualizar cotización ${id}:`, error.message);
+      throw error;
+    }
+  },
+  
+  // Eliminar una cotización
+  delete: async (id) => {
+    try {
+      await apiClient.delete(`/cotizaciones/${id}`);
+    } catch (error) {
+      console.error(`Error al eliminar cotización ${id}:`, error.message);
+      throw error;
+    }
+  },
+  
+  // Obtener URL para PDF de cotización
+  getPdfUrl: (id) => {
+    return `${apiClient.defaults.baseURL}/cotizaciones/${id}/pdf`;
+  }
 };
 
 // Servicios para Facturas
 export const facturasService = {
-  // Implementación similar con mejor manejo de errores...
+  // Obtener todas las facturas
   getAll: async () => {
     try {
       const response = await apiClient.get('/facturas/');
@@ -126,7 +183,43 @@ export const facturasService = {
     }
   },
   
-  // Resto de métodos...
+  // Obtener una factura por ID
+  getById: async (id) => {
+    try {
+      const response = await apiClient.get(`/facturas/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al obtener factura ${id}:`, error.message);
+      throw error;
+    }
+  },
+  
+  // Crear una nueva factura
+  create: async (factura) => {
+    try {
+      const response = await apiClient.post('/facturas/', factura);
+      return response.data;
+    } catch (error) {
+      console.error('Error al crear factura:', error.message);
+      throw error;
+    }
+  },
+  
+  // Actualizar una factura
+  update: async (id, factura) => {
+    try {
+      const response = await apiClient.put(`/facturas/${id}`, factura);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al actualizar factura ${id}:`, error.message);
+      throw error;
+    }
+  },
+  
+  // Obtener URL para PDF de factura
+  getPdfUrl: (id) => {
+    return `${apiClient.defaults.baseURL}/facturas/${id}/pdf`;
+  }
 };
 
 export default {

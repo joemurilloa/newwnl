@@ -195,7 +195,13 @@ const generarPDF = () => {
 
 const marcarComoPagada = async () => {
   try {
-    await facturasService.update(factura.value.id, { estado_pago: 'pagado' });
+    // Crear objeto con el nuevo estado
+    const datos = { 
+      estado_pago: 'pagado'
+      // No necesitamos enviar fecha_pago, el backend lo manejará
+    };
+    
+    await facturasService.update(factura.value.id, datos);
     
     // Actualizar el estado localmente
     factura.value.estado_pago = 'pagado';
@@ -203,13 +209,19 @@ const marcarComoPagada = async () => {
     
     toast.success('Factura marcada como pagada');
   } catch (error) {
-    toast.error('Error al actualizar el estado de la factura');
+    let mensaje = 'Error al actualizar el estado de la factura';
+    if (error.response && error.response.data && error.response.data.detail) {
+      mensaje += ': ' + error.response.data.detail;
+    }
+    toast.error(mensaje);
     console.error(error);
   }
 };
 
-// Ciclo de vida
-onMounted(() => {
-  cargarFactura();
-});
+// Actualizar el método generarPDF
+const generarPDF = () => {
+  // Utilizar la función del servicio para obtener la URL
+  const pdfUrl = facturasService.getPdfUrl(factura.value.id);
+  window.open(pdfUrl, '_blank');
+};
 </script>

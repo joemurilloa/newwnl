@@ -195,31 +195,44 @@ const formatearFecha = (fechaStr) => {
 
 const cambiarEstado = async (nuevoEstado) => {
   try {
-    await cotizacionesService.update(cotizacion.value.id, { estado: nuevoEstado });
+    // Crear objeto con el nuevo estado
+    const datos = { 
+      estado: nuevoEstado 
+    };
+    
+    await cotizacionesService.update(cotizacion.value.id, datos);
     
     // Actualizar el estado localmente
     cotizacion.value.estado = nuevoEstado;
     
     toast.success(`Cotización ${nuevoEstado === 'aprobada' ? 'aprobada' : 'rechazada'} con éxito`);
+    
+    // Si se aprueba, verificar si necesitamos habilitar el botón de crear factura
+    if (nuevoEstado === 'aprobada') {
+      tieneFactura.value = false;
+    }
   } catch (error) {
-    toast.error('Error al cambiar el estado de la cotización');
+    let mensaje = 'Error al cambiar el estado de la cotización';
+    if (error.response && error.response.data && error.response.data.detail) {
+      mensaje += ': ' + error.response.data.detail;
+    }
+    toast.error(mensaje);
     console.error(error);
   }
 };
 
+// Actualizar el método generarPDF
 const generarPDF = () => {
-  window.open(cotizacionesService.getPdfUrl(cotizacion.value.id), '_blank');
+  // Utilizar la función del servicio para obtener la URL
+  const pdfUrl = cotizacionesService.getPdfUrl(cotizacion.value.id);
+  window.open(pdfUrl, '_blank');
 };
 
+// Actualizar el método crearFactura
 const crearFactura = () => {
   router.push({
     name: 'factura-nueva',
     query: { cotizacion_id: cotizacion.value.id }
   });
 };
-
-// Ciclo de vida
-onMounted(() => {
-  cargarCotizacion();
-});
 </script>

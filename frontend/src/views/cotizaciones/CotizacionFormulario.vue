@@ -274,29 +274,37 @@ const guardarCotizacion = async () => {
       return;
     }
     
+    // Calcular subtotales para cada ítem si no están calculados
+    cotizacion.value.items.forEach((item, index) => {
+      item.subtotal = calcularSubtotalItem(index);
+    });
+    
+    // Crear objeto de cotización con el formato correcto para el backend
+    const cotizacionData = {
+      cliente_id: cotizacion.value.cliente_id,
+      items: cotizacion.value.items,
+      notas: cotizacion.value.notas
+    };
+    
     if (esEdicion.value) {
-      await cotizacionesService.update(route.params.id, {
+      // En edición, el backend espera diferentes campos
+      const datosActualizacion = {
         estado: 'pendiente',
         notas: cotizacion.value.notas,
-      });
+      };
+      await cotizacionesService.update(route.params.id, datosActualizacion);
       toast.success('Cotización actualizada con éxito');
     } else {
-      await cotizacionesService.create(cotizacion.value);
+      await cotizacionesService.create(cotizacionData);
       toast.success('Cotización creada con éxito');
     }
     
     router.push('/cotizaciones');
   } catch (error) {
-    toast.error('Error al guardar la cotización');
+    toast.error('Error al guardar la cotización: ' + (error.response?.data?.detail || error.message));
     console.error(error);
   } finally {
     cargando.value = false;
   }
 };
-
-// Ciclo de vida
-onMounted(() => {
-  cargarClientes();
-  cargarCotizacion();
-});
 </script>

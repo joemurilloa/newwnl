@@ -214,19 +214,63 @@ const limpiarFiltros = () => {
   filtroCliente.value = '';
 };
 
+// Actualizar los métodos en CotizacionesLista.vue
+
+// Mejorar el método de eliminación con confirmación apropiada
 const eliminarCotizacion = async (id) => {
-  if (!confirm('¿Estás seguro de que deseas eliminar esta cotización?')) return;
+  // Confirmación más clara para el usuario
+  if (!confirm('¿Estás seguro de que deseas eliminar esta cotización? Esta acción no se puede deshacer.')) {
+    return;
+  }
   
   try {
     await cotizacionesService.delete(id);
+    // Actualizar la lista local después de eliminar
     cotizaciones.value = cotizaciones.value.filter(c => c.id !== id);
     toast.success('Cotización eliminada con éxito');
   } catch (error) {
-    toast.error('Error al eliminar la cotización');
+    let mensaje = 'Error al eliminar la cotización';
+    if (error.response?.data?.detail) {
+      mensaje += ': ' + error.response.data.detail;
+    }
+    toast.error(mensaje);
     console.error(error);
   }
 };
 
+// Actualizar el método aplicarFiltros para manejar mejor los errores
+const aplicarFiltros = () => {
+  try {
+    // Los filtros se aplican automáticamente gracias al computed
+    // No necesitamos hacer nada aquí
+  } catch (error) {
+    console.error("Error al aplicar filtros:", error);
+    toast.error("Error al filtrar cotizaciones");
+  }
+};
+
+// Mejorar la carga de cotizaciones
+const cargarCotizaciones = async () => {
+  try {
+    cargando.value = true;
+    const data = await cotizacionesService.getAll();
+    
+    // Verificar que data sea un array
+    if (Array.isArray(data)) {
+      cotizaciones.value = data;
+    } else {
+      console.error("Formato inesperado de datos:", data);
+      cotizaciones.value = [];
+      toast.error("Error en el formato de datos recibidos");
+    }
+  } catch (error) {
+    toast.error('Error al cargar las cotizaciones');
+    console.error(error);
+    cotizaciones.value = []; // Establecer un array vacío en caso de error
+  } finally {
+    cargando.value = false;
+  }
+};
 // Ciclo de vida
 onMounted(() => {
   Promise.all([cargarCotizaciones(), cargarClientes()]);
