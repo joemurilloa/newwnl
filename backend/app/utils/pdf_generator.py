@@ -5,6 +5,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.units import inch
 import os
 import datetime
+from .. import models  
+
 
 def generar_pdf_cotizacion(cotizacion, cliente, items):
     """Genera un PDF para una cotización en inglés."""

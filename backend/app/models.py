@@ -1,10 +1,9 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text, Enum
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import datetime
 import enum
 
-Base = declarative_base()
+from .database import Base  # Usar Base desde database.py en lugar de redefinirla
 
 class EstadoCotizacion(enum.Enum):
     PENDIENTE = "pendiente"

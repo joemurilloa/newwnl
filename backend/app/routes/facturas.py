@@ -64,12 +64,22 @@ def actualizar_factura(factura_id: int, factura: schemas.FacturaUpdate, db: Sess
         raise HTTPException(status_code=404, detail="Factura no encontrada")
     
     update_data = factura.dict(exclude_unset=True)
+    
+    # Convertir estado_pago de string a enum
+    if 'estado_pago' in update_data:
+        estado_str = update_data['estado_pago']
+        if estado_str == 'pendiente':
+            update_data['estado_pago'] = models.EstadoPago.PENDIENTE
+        elif estado_str == 'pagado':
+            update_data['estado_pago'] = models.EstadoPago.PAGADO
+            # Si se marca como pagado y no tiene fecha de pago, establecerla
+            if not db_factura.fecha_pago:
+                db_factura.fecha_pago = datetime.datetime.utcnow()
+        elif estado_str == 'parcial':
+            update_data['estado_pago'] = models.EstadoPago.PARCIAL
+    
     for key, value in update_data.items():
         setattr(db_factura, key, value)
-    
-    # Si se cambia el estado a PAGADO, registrar la fecha de pago
-    if factura.estado_pago and factura.estado_pago == schemas.EstadoPagoEnum.PAGADO and not db_factura.fecha_pago:
-        db_factura.fecha_pago = datetime.datetime.utcnow()
     
     db.commit()
     db.refresh(db_factura)
