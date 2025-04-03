@@ -1,8 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_serializer
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
+# Enums
+class EstadoCotizacionEnum(str, Enum):
+    PENDIENTE = "pendiente"
+    APROBADA = "aprobada"
+    RECHAZADA = "rechazada"
+
+class EstadoPagoEnum(str, Enum):
+    PENDIENTE = "pendiente"
+    PAGADO = "pagado"
+    PARCIAL = "parcial"
 # Enums
 class EstadoCotizacionEnum(str, Enum):
     PENDIENTE = "pendiente"
@@ -77,9 +87,13 @@ class Cotizacion(CotizacionBase):
     impuesto: float
     total: float
     items: List[ItemCotizacion] = []
-    
+
     class Config:
         orm_mode = True
+        # Añadir esta función para convertir el enum a string
+        json_encoders = {
+            EstadoCotizacionEnum: lambda v: v.value
+        }
 
 # Factura schemas
 class FacturaBase(BaseModel):
@@ -103,3 +117,4 @@ class Factura(FacturaBase):
     
     class Config:
         orm_mode = True
+

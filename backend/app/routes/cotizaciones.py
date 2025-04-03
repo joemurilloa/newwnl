@@ -57,7 +57,25 @@ def crear_cotizacion(cotizacion: schemas.CotizacionCreate, db: Session = Depends
 
 @router.get("/", response_model=List[schemas.Cotizacion])
 def obtener_cotizaciones(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    cotizaciones = db.query(models.Cotizacion).offset(skip).limit(limit).all()
+    cotizaciones_db = db.query(models.Cotizacion).offset(skip).limit(limit).all()
+    
+    # Crear una lista para almacenar las cotizaciones con el estado convertido a string
+    cotizaciones = []
+    for cotizacion_db in cotizaciones_db:
+        # Crear un diccionario con los datos de la cotización
+        cotizacion_dict = {
+            "id": cotizacion_db.id,
+            "cliente_id": cotizacion_db.cliente_id,
+            "fecha": cotizacion_db.fecha,
+            "estado": cotizacion_db.estado.value,  # Convertir enum a string
+            "subtotal": cotizacion_db.subtotal,
+            "impuesto": cotizacion_db.impuesto,
+            "total": cotizacion_db.total,
+            "notas": cotizacion_db.notas,
+            "items": cotizacion_db.items
+        }
+        cotizaciones.append(cotizacion_dict)
+    
     return cotizaciones
 
 @router.get("/aprobadas", response_model=List[schemas.Cotizacion])

@@ -195,11 +195,15 @@ const esEdicion = computed(() => !!route.params.id);
 // Métodos
 const cargarClientes = async () => {
   try {
+    cargando.value = true; // Indicar que está cargando
     const clientesData = await clientesService.getAll();
     clientes.value = clientesData;
   } catch (error) {
     toast.error('Error al cargar los clientes');
     console.error(error);
+    clientes.value = []; // Asegurar que sea un array vacío en caso de error
+  } finally {
+    cargando.value = false; // Desactivar el indicador de carga
   }
 };
 
@@ -307,4 +311,12 @@ const guardarCotizacion = async () => {
     cargando.value = false;
   }
 };
+
+// Ciclo de vida
+onMounted(() => {
+  Promise.all([
+    esEdicion.value ? cargarCotizacion() : Promise.resolve(),
+    cargarClientes()
+  ]);
+});
 </script>
